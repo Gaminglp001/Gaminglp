@@ -1,0 +1,230 @@
+// ==UserScript==
+// @name         Tabelle/Text-Notizen
+// @namespace    http://tampermonkey.net/
+// @version      1.0
+// @description  Fügt ein Textfeld und eine Tabelle hinzu und öffnet eines davon im Leitstellenspiel
+// @author       GamingLP
+// @match        https://www.leitstellenspiel.de/
+// @grant        GM_addStyle
+// @grant        GM_setValue
+// @grant        GM_getValue
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    // Funktion zum Öffnen des Textfelds
+    function openTextField() {
+        textField.style.display = 'block';
+        textField.focus();
+        saveButton.style.display = 'block';
+        tableContainer.style.display = 'none';
+    }
+
+    // Funktion zum Öffnen der Tabelle
+    function openTable() {
+        textField.style.display = 'none';
+        saveButton.style.display = 'block';
+        tableContainer.style.display = 'block';
+    }
+
+    // Funktion zum Schließen des Textfelds/Tabelle
+    function closeElement() {
+        textField.style.display = 'none';
+        saveButton.style.display = 'none';
+        tableContainer.style.display = 'none';
+    }
+
+    // Funktion zum Speichern des Texts oder der Tabelle
+    function saveContent() {
+        if (textField.style.display === 'block') {
+            var text = textField.value;
+            GM_setValue('savedText', text); // Speichern des Texts mit GM_setValue
+        } else if (tableContainer.style.display === 'block') {
+            var tableContent = [];
+            var rows = table.rows;
+            for (var i = 1; i < rows.length; i++) {
+                var rowData = [];
+                var cells = rows[i].cells;
+                for (var j = 0; j < cells.length; j++) {
+                    if (j === 3) {
+                        var checkbox = cells[j].querySelector('input[type="checkbox"]');
+                        rowData.push(checkbox.checked);
+                    } else {
+                        rowData.push(cells[j].textContent);
+                    }
+                }
+                tableContent.push(rowData);
+            }
+            GM_setValue('savedTable', JSON.stringify(tableContent)); // Speichern der Tabelle mit GM_setValue
+        }
+        closeElement();
+    }
+
+    // Funktion zum Schließen des Textfelds/Tabelle mit der ESC-Taste
+    function closeElementWithEsc(event) {
+        if (event.key === 'Escape') {
+            if (tableContainer.style.display === 'block') {
+                if (confirm('Bist du sicher, dass du dies schließen möchtest? Nutze doch den Speicherbutton. ♥')) {
+                    closeElement();
+                }
+            } else {
+                if (confirm('Bist du sicher, dass du dies schließen möchtest? Nutze doch den Speicherbutton. ♥')) {
+                    closeElement();
+                }
+            }
+        }
+    }
+
+    // Funktion zum Öffnen des Textfelds mit dem Hotkey "-"
+    function openTextFieldWithHotkey(event) {
+        if (event.key === ',') {
+            openTextField();
+        }
+    }
+
+    // Funktion zum Öffnen der Tabelle mit dem Hotkey "."
+    function openTableWithHotkey(event) {
+        if (event.key === '.') {
+            openTable();
+        }
+    }
+
+    // Eingabefeld erstellen
+    var textField = document.createElement('textarea');
+    textField.id = 'textField';
+    textField.placeholder = 'Hier Text eingeben...';
+    textField.style.display = 'none';
+    textField.style.position = 'fixed';
+    textField.style.top = '50%';
+    textField.style.left = '50%';
+    textField.style.transform = 'translate(-50%, -50%)';
+    textField.style.width = '700px'; // Breite des Textfelds anpassen
+    textField.style.height = '350px'; // Höhe des Textfelds anpassen
+    textField.style.zIndex = '9999';
+    textField.value = GM_getValue('savedText', ''); // Gespeicherten Text wiederherstellen
+    document.body.appendChild(textField);
+
+    // Button für Textfeld erstellen
+    var textFieldButton = document.createElement('button');
+    textFieldButton.innerHTML = 'Öffne Textfeld';
+    textFieldButton.style.position = 'fixed';
+    textFieldButton.style.top = '10px';
+    textFieldButton.style.left = '275px';
+    textFieldButton.style.zIndex = '9999';
+    document.body.appendChild(textFieldButton);
+
+    // Button-Klickereignis für Textfeld
+    textFieldButton.addEventListener('click', openTextField);
+
+    // Button für Öffne Tabelle erstellen
+    var openTableButton = document.createElement('button');
+    openTableButton.innerHTML = 'Öffne Tabelle';
+    openTableButton.style.position = 'fixed';
+    openTableButton.style.top = '10px';
+    openTableButton.style.left = '475px'; // Position des Buttons anpassen
+    openTableButton.style.zIndex = '9999';
+    document.body.appendChild(openTableButton);
+
+// Button-Klickereignis für Öffne Tabelle
+openTableButton.addEventListener('click', openTable);
+
+
+    // Tabelle erstellen
+    var tableContainer = document.createElement('div');
+    tableContainer.id = 'tableContainer';
+    tableContainer.style.display = 'none';
+    tableContainer.style.position = 'fixed';
+    tableContainer.style.top = '50%';
+    tableContainer.style.left = '50%';
+    tableContainer.style.transform = 'translate(-50%, -50%)';
+    tableContainer.style.width = '600px'; // Breite des Container-Elements anpassen
+    tableContainer.style.height = '500px'; // Höhe des Container-Elements anpassen
+    tableContainer.style.zIndex = '9999';
+    document.body.appendChild(tableContainer);
+
+    var table = document.createElement('table');
+    table.id = 'table';
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    table.style.border = '1px solid #ccc';
+    tableContainer.appendChild(table);
+
+    // Tabellenüberschriften erstellen
+    var tableHeaders = ['Wache', 'Fahrzeug', 'Preis', 'Prio'];
+    var headerRow = table.insertRow();
+    headerRow.style.position = 'sticky';
+    headerRow.style.top = '0';
+    for (var i = 0; i < tableHeaders.length; i++) {
+        var th = document.createElement('th');
+        th.textContent = tableHeaders[i];
+        th.style.width = '130px';
+        headerRow.appendChild(th);
+    }
+
+    // Zeilen und Spalten für die Tabelle erstellen
+    var savedTable = GM_getValue('savedTable', []);
+    if (savedTable) {
+        savedTable = JSON.parse(savedTable);
+        for (var row = 0; row < savedTable.length; row++) {
+            var newRow = table.insertRow();
+            for (var col = 0; col < savedTable[row].length; col++) {
+                var newCell = newRow.insertCell();
+
+                if (col === 3) { // Vierte Spalte
+                    var checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.checked = savedTable[row][col];
+                    newCell.appendChild(checkbox);
+                } else {
+                    newCell.contentEditable = true;
+                    newCell.textContent = savedTable[row][col];
+                    if (row === 0) {
+                        newCell.style.fontWeight = 'bold';
+                    }
+                }
+            }
+        }
+    }
+
+    // Button zum Speichern erstellen
+    var saveButton = document.createElement('button');
+    saveButton.innerHTML = 'Speichern';
+    saveButton.style.display = 'none';
+    saveButton.style.position = 'fixed';
+    saveButton.style.bottom = '10px';
+    saveButton.style.left = '50%';
+    saveButton.style.transform = 'translateX(-50%)';
+    saveButton.style.zIndex = '9999';
+    document.body.appendChild(saveButton);
+
+    // Button-Klickereignis für den Speichern-Button
+    saveButton.addEventListener('click', saveContent);
+
+    // Event-Listener zum Schließen des Textfelds/Tabelle mit der ESC-Taste
+    document.addEventListener('keydown', closeElementWithEsc);
+
+    // Event-Listener zum Öffnen des Textfelds mit dem Hotkey ","
+    document.addEventListener('keydown', openTextFieldWithHotkey);
+
+    // Event-Listener zum Öffnen der Tabelle mit dem Hotkey "."
+    document.addEventListener('keydown', openTableWithHotkey);
+
+    // CSS-Stile hinzufügen
+    GM_addStyle(`
+        #textField {
+            resize: none;
+        }
+
+        #table td,
+        #table th {
+            border: 1px solid #ccc;
+            padding: 8px;
+            background-color: #fff; /* Hintergrundfarbe der Zellen */
+        }
+
+        #table th {
+            background-color: #f2f2f2;
+        }
+    `);
+})();
