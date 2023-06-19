@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Tabelle/Text-Notizen
+// @name         Tabelle/Text-Notizen/feritige-Version
 // @namespace    http://tampermonkey.net/
 // @version      1.0
 // @description  Fügt ein Textfeld und eine Tabelle hinzu und öffnet eines davon im Leitstellenspiel
@@ -93,7 +93,7 @@
     // Eingabefeld erstellen
     var textField = document.createElement('textarea');
     textField.id = 'textField';
-    textField.placeholder = 'Hier Text eingeben...';
+    textField.placeholder = 'Schreibe hier deine Notizen...';
     textField.style.display = 'none';
     textField.style.position = 'fixed';
     textField.style.top = '50%';
