@@ -170,7 +170,7 @@
     table.style.width = '100%';
     table.style.height = "100%";
     table.style.borderCollapse = 'collapse';
-    table.style.border = '1px solid #ccc';
+    table.style.border = '1px solid #F00';
     tableContainer.appendChild(table);
 
     // Tabellenüberschriften erstellen
